@@ -1,0 +1,10 @@
+# 忽略打印机配置文件
+printer_config/
+
+# 忽略 Token 文件
+token.txt
+
+test/
+
+# 忽略 Python 缓存
+__pycache__/
