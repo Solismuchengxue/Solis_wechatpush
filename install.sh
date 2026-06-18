@@ -364,6 +364,12 @@ Solis_wechatpush 已成功安装。
 配置完成后重启 Moonraker 即可生效：
   sudo systemctl restart moonraker
 
+可选：在 printer.cfg 中加入以下宏，即可从 Klipper 控制台发送测试推送：
+
+  [gcode_macro SEND_WECHAT_TEST]
+  gcode:
+      {action_call_remote_method("send_wechat_test")}
+
 如需卸载，请运行: $0 -u
 
 EOF
