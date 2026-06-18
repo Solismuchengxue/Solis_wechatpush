@@ -663,16 +663,31 @@ class WechatPush:
         return media_id
 
     # 提取本地IP地址（获取本地IP地址失败，则将IP地址设置为"127.0.0.1"，即本地回环地址）
-    def _extract_ip(self):
-        st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    @staticmethod
+    def _is_lan_ip(ip: str) -> bool:
         try:
-            st.connect(('10.255.255.255', 1))
-            IP = st.getsockname()[0]
+            p = list(map(int, ip.split('.')))
+            return (
+                p[0] == 10 or
+                (p[0] == 172 and 16 <= p[1] <= 31) or
+                (p[0] == 192 and p[1] == 168)
+            )
         except Exception:
-            IP = '127.0.0.1'
-        finally:
-            st.close()
-        return IP
+            return False
+
+    def _extract_ip(self) -> str:
+        for target in ('8.8.8.8', '192.168.0.1', '10.0.0.1'):
+            try:
+                st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                st.settimeout(0)
+                st.connect((target, 80))
+                ip = st.getsockname()[0]
+                st.close()
+                if self._is_lan_ip(ip):
+                    return ip
+            except Exception:
+                pass
+        return '127.0.0.1'
 
 # 主方法：加载方法（调用WechatPush类的构造函数，并将config作为参数传递给构造函数，创建一个WechatPush对象。最后将对象返回。）
 def load_component(config: ConfigHelper) -> WechatPush:
