@@ -676,10 +676,25 @@ class WechatPush:
             return False
 
     def _extract_ip(self) -> str:
+        import subprocess
+        # 优先用 ip addr 枚举所有接口，取第一个 RFC-1918 私有 IP
+        try:
+            out = subprocess.check_output(
+                ['ip', '-4', 'addr', 'show', 'scope', 'global'],
+                timeout=2, stderr=subprocess.DEVNULL
+            ).decode()
+            for line in out.splitlines():
+                line = line.strip()
+                if line.startswith('inet '):
+                    ip = line.split()[1].split('/')[0]
+                    if self._is_lan_ip(ip):
+                        return ip
+        except Exception:
+            pass
+        # 回退：UDP 路由探测
         for target in ('8.8.8.8', '192.168.0.1', '10.0.0.1'):
             try:
                 st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                st.settimeout(0)
                 st.connect((target, 80))
                 ip = st.getsockname()[0]
                 st.close()
