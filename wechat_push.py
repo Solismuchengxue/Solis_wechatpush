@@ -124,6 +124,9 @@ class WechatPush:
         # 属性：当前进度（来自 virtual_sdcard）
         self.current_progress: float = 0.0
 
+        self._token: Optional[str] = None
+        self._token_expire: float = 0.0
+
         # 事件处理程序：处理开始（通过self.server.register_event_handler()方法注册）
         self.server.register_event_handler(
             "server:klippy_started", self._handle_started)
@@ -135,6 +138,8 @@ class WechatPush:
         # 事件处理程序：状态更新（通过self.server.register_event_handler()方法注册）
         self.server.register_event_handler(
             "server:status_update", self._status_update)
+
+        self.server.register_remote_method("send_wechat_test", self._handle_test_push)
 
     # 事件处理程序：处理开始的实现
     async def _handle_started(self, state: str) -> None:
@@ -163,10 +168,20 @@ class WechatPush:
             state = self.last_print_stats["state"]
             logging.info(f"Job state initialized: {state}")
 
+        if self._getAsToken() is None:
+            self.server.add_warning(
+                "[Wechat_Push] 凭证验证失败，请检查 moonraker.conf 中的"
+                " corp_id / corp_secret / agent_id 是否正确。")
+        else:
+            logging.info("[Wechat_Push] 凭证验证成功，access_token 已缓存。")
+
     # 事件处理程序：处理中断的实现
     async def _handle_shutdown(self, state: str) -> None:
         # 当klippy关闭时，会调用该方法。该方法记录日志
         logging.info(f"Shutdown: {state}")
+
+    async def _handle_test_push(self) -> None:
+        self._pushState(state="complete", filename="[测试] wechat_push_test.gcode")
 
     # 事件处理程序：状态更新的实现
     async def _status_update(self, data: Dict[str, Any]) -> None:
@@ -271,6 +286,7 @@ class WechatPush:
     # 方法：推送状态
     def _pushState(self, state: str, text: str = None, filename: str = None):
         logging.info(f"推送: state={state}, filename='{filename}'")
+        tmp_path = f"/tmp/mwx_media_{os.getpid()}_{int(time.time() * 1000)}.png"
         dic = {}
         AsToken: str = self._getAsToken()
         if AsToken is None:
@@ -302,15 +318,15 @@ class WechatPush:
                 font = ImageFont.truetype(_FONT_PATH, 12)
                 dr.text((35, 5), info, font=font, fill="#FF5252")
                 # im.show()
-                im.save(r"/tmp/mwx_media.png")
+                im.save(tmp_path)
             else:
-                f = open("/tmp/mwx_media.png", "wb")
+                f = open(tmp_path, "wb")
                 f.write(requests.get("http://localhost" + self.camera).content)
                 f.close()
-                media_path = "/tmp/mwx_media.png"
+                media_path = tmp_path
 
             # 上传临时图片
-            media_id = self._uploadImage("/tmp/mwx_media.png")
+            media_id = self._uploadImage(tmp_path)
 
         elif state == "printing":
             state_title = "开始打印"
@@ -329,11 +345,11 @@ class WechatPush:
                 font = ImageFont.truetype(_FONT_PATH, 12)
                 dr.text((35, 5), info, font=font, fill="#00FF7F")
                 # im.show()
-                im.save(r"/tmp/mwx_media.png")
+                im.save(tmp_path)
                 
             else:
                 if self.camera is not None:
-                    f = open("/tmp/mwx_media.png", "wb")
+                    f = open(tmp_path, "wb")
                     f.write(requests.get("http://localhost" + self.camera).content)
                     f.close()
                 else:
@@ -342,9 +358,9 @@ class WechatPush:
                     dr = ImageDraw.Draw(im)
                     font = ImageFont.truetype(_FONT_PATH, 12)
                     dr.text((35, 5), info, font=font, fill="#00FF7F")
-                    im.save(r"/tmp/mwx_media.png")
+                    im.save(tmp_path)
 
-            media_path = "/tmp/mwx_media.png"
+            media_path = tmp_path
             media_id = self._uploadImage(media_path)
 
         elif state == "complete":
@@ -382,7 +398,7 @@ class WechatPush:
             if camera_available:
                 # 有摄像头，截取快照
                 try:
-                    f = open("/tmp/mwx_media.png", "wb")
+                    f = open(tmp_path, "wb")
                     f.write(requests.get("http://localhost" + self.camera).content)
                     f.close()
                 except Exception as e:
@@ -393,16 +409,16 @@ class WechatPush:
                 if thumb_path is not None and os.path.exists(thumb_path):
                     # 使用缩略图
                     import shutil
-                    shutil.copy2(thumb_path, "/tmp/mwx_media.png")
+                    shutil.copy2(thumb_path, tmp_path)
                 else:
                     # 创建空白图片
                     im = Image.new("RGB", (300, 80), (255, 255, 255))
                     dr = ImageDraw.Draw(im)
                     font = ImageFont.truetype(_FONT_PATH, 12)
                     dr.text((35, 5), info, font=font, fill="#00BFFF")
-                    im.save(r"/tmp/mwx_media.png")
+                    im.save(tmp_path)
                 
-            media_path = "/tmp/mwx_media.png"
+            media_path = tmp_path
             media_id = self._uploadImage(media_path)
 
         elif state == "error":
@@ -414,7 +430,7 @@ class WechatPush:
             if text:
                 info += f"\n原因: {text}"
             digest = f"打印错误: {text[:60] if text else '未知'}"
-            media_path = "/tmp/mwx_media.png"
+            media_path = tmp_path
 
             # 创建图片
             if self.camera is None:
@@ -423,9 +439,9 @@ class WechatPush:
                 font = ImageFont.truetype(_FONT_PATH, 12)
                 dr.text((35, 5), info, font=font, fill="#FF5252")
                 # im.show()
-                im.save(r"/tmp/mwx_media.png")
+                im.save(tmp_path)
             else:
-                f = open("/tmp/mwx_media.png", "wb")
+                f = open(tmp_path, "wb")
                 f.write(requests.get("http://localhost" + self.camera).content)
                 f.close()
 
@@ -451,13 +467,13 @@ class WechatPush:
                 font = ImageFont.truetype(_FONT_PATH, 12)
                 dr.text((35, 5), info, font=font, fill="#00BFFF")
                 # im.show()
-                im.save(r"/tmp/mwx_media.png")
-                media_path = "/tmp/mwx_media.png"
+                im.save(tmp_path)
+                media_path = tmp_path
             else:
-                f = open("/tmp/mwx_media.png", "wb")
+                f = open(tmp_path, "wb")
                 f.write(requests.get("http://localhost" + self.camera).content)
                 f.close()
-                media_path = "/tmp/mwx_media.png"
+                media_path = tmp_path
                             
             media_id = self._uploadImage(media_path)
 
@@ -477,10 +493,10 @@ class WechatPush:
                 font = ImageFont.truetype(_FONT_PATH, 12)
                 dr.text((35, 5), info, font=font, fill="#00BFFF")
                 # im.show()
-                im.save(r"/tmp/mwx_media.png")
+                im.save(tmp_path)
             else:
                 if self.camera is not None:
-                    f = open("/tmp/mwx_media.png", "wb")
+                    f = open(tmp_path, "wb")
                     f.write(requests.get("http://localhost" + self.camera).content)
                     f.close()
                 else:
@@ -489,9 +505,9 @@ class WechatPush:
                     dr = ImageDraw.Draw(im)
                     font = ImageFont.truetype(_FONT_PATH, 12)
                     dr.text((35, 5), info, font=font, fill="#00BFFF")
-                    im.save(r"/tmp/mwx_media.png")
+                    im.save(tmp_path)
                 
-            media_path = "/tmp/mwx_media.png"                
+            media_path = tmp_path                
             media_id = self._uploadImage(media_path)
         else:
             logging.error("unknown state")
@@ -599,6 +615,9 @@ class WechatPush:
         
     # 方法：获取企业微信的access_token
     def _getAsToken(self):
+        now = time.time()
+        if self._token and now < self._token_expire:
+            return self._token
         dic = {'corpid': self.corpid, 'corpsecret': self.corpsecret}
         r = requests.post(
             "https://qyapi.weixin.qq.com/cgi-bin/gettoken", json=dic)
@@ -611,7 +630,9 @@ class WechatPush:
             logging.error(
                 f"Failed to get access_token. ErrCode:{errcode},ErrMsg:{data['errmsg']}")
             return None
-        return data['access_token']
+        self._token = data['access_token']
+        self._token_expire = now + data.get('expires_in', 7200) - 200
+        return self._token
 
     # 方法：上传图片到企业微信
     def _uploadImage(self, path):
