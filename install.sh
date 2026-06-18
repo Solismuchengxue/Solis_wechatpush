@@ -263,13 +263,10 @@ uninstall_all() {
     fi
 
     # 提示手动移除配置
-    print_info "以下内容需要手动清理："
+    print_info "请在 Fluidd / Mainsail 的配置文件编辑器中删除以下两个配置段："
     echo ""
-    echo "  1. moonraker.conf 中的 [wechat_push] 配置段"
-    echo "  2. moonraker.conf 中的 [update_manager Solis_wechatpush] 配置段"
-    echo ""
-    echo "  请手动编辑 moonraker.conf 移除上述配置段:"
-    echo "    nano $MOONRAKER_CONFIG"
+    echo "  - [wechat_push]"
+    echo "  - [update_manager Solis_wechatpush]"
     echo ""
 
     if prompt_yes_no "是否立即重启 Moonraker 服务？"; then
@@ -356,10 +353,9 @@ Solis_wechatpush 已成功安装。
 - 字体文件:        $SRC_FONT (项目内 fonts/ 目录)
 - 配置文件:        $MOONRAKER_CONFIG (包含 [wechat_push] 及 [update_manager Solis_wechatpush])
 
-重要：请编辑 moonraker.conf 填写企业微信参数：
-  nano $MOONRAKER_CONFIG
+重要：请在 Fluidd / Mainsail 的配置文件编辑器中打开 moonraker.conf，
+填写以下企业微信参数：
 
-需要配置以下参数：
   - corp_secret:  企业微信应用私钥
   - corp_id:      企业ID
   - agent_id:     企业微信应用ID
