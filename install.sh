@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# Solis_wechatpush 交互式安装脚本
+# Solis_Wechatpush 交互式安装脚本
 # 功能：
 #   1. 安装 Moonraker 组件 (wechat_push.py) 软链接
 #   2. 验证字体文件 (fonts/FreeMono.ttf)
@@ -190,18 +190,18 @@ add_update_manager() {
         return 1
     fi
 
-    local updater_section="[update_manager Solis_wechatpush]
+    local updater_section="[update_manager Solis_Wechatpush]
 type: git_repo
 primary_branch: main
 path: ${SCRIPT_DIR}
-origin: https://github.com/Solismuchengxue/Solis_wechatpush.git
+origin: https://github.com/Solismuchengxue/Solis_Wechatpush.git
 managed_services: moonraker"
 
-    if grep -qF "[update_manager Solis_wechatpush]" "$MOONRAKER_CONFIG" 2>/dev/null; then
-        print_success "更新管理器 [update_manager Solis_wechatpush] 已存在"
+    if grep -qF "[update_manager Solis_Wechatpush]" "$MOONRAKER_CONFIG" 2>/dev/null; then
+        print_success "更新管理器 [update_manager Solis_Wechatpush] 已存在"
     else
         echo -e "\n$updater_section" >> "$MOONRAKER_CONFIG"
-        print_success "已添加更新管理器 [update_manager Solis_wechatpush]"
+        print_success "已添加更新管理器 [update_manager Solis_Wechatpush]"
     fi
 }
 
@@ -251,7 +251,7 @@ restart_services() {
 
 # ----------------------------- 卸载流程 ----------------------------------
 uninstall_all() {
-    print_header "卸载 Solis_wechatpush"
+    print_header "卸载 Solis_Wechatpush"
 
     # 移除组件文件
     if [ -f "$DEST_COMPONENT" ]; then
@@ -266,7 +266,7 @@ uninstall_all() {
     print_info "请在 Fluidd / Mainsail 的配置文件编辑器中删除以下两个配置段："
     echo ""
     echo "  - [wechat_push]"
-    echo "  - [update_manager Solis_wechatpush]"
+    echo "  - [update_manager Solis_Wechatpush]"
     echo ""
 
     if prompt_yes_no "是否立即重启 Moonraker 服务？"; then
@@ -282,7 +282,7 @@ show_help() {
 用法: $0 [选项]
 
 选项:
-  -u          卸载 Solis_wechatpush
+  -u          卸载 Solis_Wechatpush
   -h          显示此帮助信息
   -v          显示版本信息
 
@@ -291,7 +291,7 @@ EOF
 }
 
 show_version() {
-    echo "Solis_wechatpush 安装脚本 v${SCRIPT_VERSION}"
+    echo "Solis_Wechatpush 安装脚本 v${SCRIPT_VERSION}"
 }
 
 # 解析命令行参数
@@ -318,7 +318,7 @@ if [ "$UNINSTALL" -eq 1 ]; then
 fi
 
 # 交互式安装
-print_header "Solis_wechatpush 交互式安装向导 v${SCRIPT_VERSION}"
+print_header "Solis_Wechatpush 交互式安装向导 v${SCRIPT_VERSION}"
 echo "本项目用于将 Klipper 打印机状态实时推送到企业微信。"
 echo ""
 
@@ -347,11 +347,11 @@ restart_services
 print_header "安装成功完成！"
 cat << EOF
 
-Solis_wechatpush 已成功安装。
+Solis_Wechatpush 已成功安装。
 
 - Moonraker 组件:  $DEST_COMPONENT → $SRC_PYTHON (软链接)
 - 字体文件:        $SRC_FONT (项目内 fonts/ 目录)
-- 配置文件:        $MOONRAKER_CONFIG (包含 [wechat_push] 及 [update_manager Solis_wechatpush])
+- 配置文件:        $MOONRAKER_CONFIG (包含 [wechat_push] 及 [update_manager Solis_Wechatpush])
 
 重要：请在 Fluidd / Mainsail 的配置文件编辑器中打开 moonraker.conf，
 填写以下企业微信参数：

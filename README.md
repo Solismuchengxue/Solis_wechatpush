@@ -34,7 +34,7 @@
 ## 📦 项目结构
 
 ```
-Solis_wechatpush/
+Solis_Wechatpush/
 ├── wechat_push.py         # 🌟 Moonraker 组件（核心推送逻辑）
 ├── install.sh             # 🔧 交互式安装/卸载脚本
 ├── sample.cfg             # 📝 Moonraker 配置示例
@@ -103,8 +103,8 @@ Klippy ──▶ Moonraker ──▶ wechat_push 组件 ──▶ 企业微信 A
 ### 方法一：使用安装脚本（推荐）
 
 ```bash
-cd ~ && git clone https://github.com/Solismuchengxue/Solis_wechatpush.git
-cd ~/Solis_wechatpush
+cd ~ && git clone https://github.com/Solismuchengxue/Solis_Wechatpush.git
+cd ~/Solis_Wechatpush
 chmod +x install.sh
 ./install.sh
 ```
@@ -113,7 +113,7 @@ chmod +x install.sh
 1. 创建 `wechat_push.py` 的软链接到 Moonraker 组件目录
 2. 验证 `fonts/FreeMono.ttf` 字体文件是否存在
 3. 在 `moonraker.conf` 中添加 `[wechat_push]` 配置段
-4. 添加 `[update_manager Solis_wechatpush]` 更新管理器
+4. 添加 `[update_manager Solis_Wechatpush]` 更新管理器
 5. 可选：设置打印机名称（显示在推送标题中）
 6. 重启 Moonraker 服务
 
@@ -123,7 +123,7 @@ chmod +x install.sh
 
 ```bash
 # 1. 创建软链接
-ln -sf ~/Solis_wechatpush/wechat_push.py ~/moonraker/moonraker/components/wechat_push.py
+ln -sf ~/Solis_Wechatpush/wechat_push.py ~/moonraker/moonraker/components/wechat_push.py
 
 # 2. 重启 Moonraker
 sudo systemctl restart moonraker
@@ -165,18 +165,18 @@ to_user: @all                               # 接收消息成员，@all为所有
 安装脚本会自动在 `moonraker.conf` 中添加以下配置，实现通过 Moonraker 的 UI 界面（Fluidd / Mainsail）直接更新：
 
 ```cfg
-[update_manager Solis_wechatpush]
+[update_manager Solis_Wechatpush]
 type: git_repo
 primary_branch: main
-path: ~/Solis_wechatpush
-origin: https://github.com/Solismuchengxue/Solis_wechatpush.git
+path: ~/Solis_Wechatpush
+origin: https://github.com/Solismuchengxue/Solis_Wechatpush.git
 managed_services: moonraker
 ```
 
 ## 🗑️ 卸载
 
 ```bash
-cd ~/Solis_wechatpush
+cd ~/Solis_Wechatpush
 ./install.sh -u
 ```
 
